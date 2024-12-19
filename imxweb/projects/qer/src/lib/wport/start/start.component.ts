@@ -35,6 +35,9 @@ import { imx_SessionService, SystemInfoService } from 'qbm';
 import { SystemInfo } from 'imx-api-qbm';
 import { DashboardService } from './dashboard.service';
 
+import { MethodDescriptor, TimeZoneInfo } from 'imx-qbm-dbts'
+import { AppConfigService } from 'qbm'
+
 @Component({
   templateUrl: './start.component.html',
   selector: 'imx-start',
@@ -47,6 +50,9 @@ export class StartComponent implements OnInit {
   public systemInfo: SystemInfo;
   public viewReady: boolean;
   public userUid: string;
+  public NameObject: any;
+  public FirstName: string;
+  public LastName: string;
 
   constructor(
     public readonly router: Router,
@@ -55,7 +61,9 @@ export class StartComponent implements OnInit {
     private readonly systemInfoService: SystemInfoService,
     private readonly sessionService: imx_SessionService,
     private readonly detectRef: ChangeDetectorRef,
-    private readonly projectConfigurationService: ProjectConfigurationService
+    private readonly projectConfigurationService: ProjectConfigurationService,
+
+    private readonly config: AppConfigService,
   ) {}
 
   public async ngOnInit(): Promise<void> {
@@ -70,6 +78,10 @@ export class StartComponent implements OnInit {
       this.projectConfig = await this.projectConfigurationService.getConfig();
       this.systemInfo = await this.systemInfoService.get();
       this.userUid = (await this.sessionService.getSessionState()).UserUid;
+      this.NameObject = await this.config.apiClient.processRequest(this.GetFirstNameLastName());
+      this.FirstName = this.NameObject.FirstName;
+      this.LastName = this.NameObject.LastName;
+
     } finally {
       busy.endBusy();
     }
@@ -160,5 +172,19 @@ export class StartComponent implements OnInit {
   public ShowNewRequestLink(): boolean {
     // Starting a new request is only allowed when the session has an identity and the ITShop(Requests) feature is enabled
     return this.userConfig?.IsITShopEnabled && this.userUid && this.systemInfo.PreProps.includes('ITSHOP');
+  }
+  private GetFirstNameLastName(): MethodDescriptor <void> {
+    const parameters = [];
+    return{
+      path: '/portal/example/nameofloggedinuser',
+      parameters,
+      method: 'GET',
+      headers: {
+        'imx-timezone': TimeZoneInfo.get(),
+      },
+      credentials: 'include',
+      observe: 'response',
+      responseType: 'json'
+    }
   }
 }

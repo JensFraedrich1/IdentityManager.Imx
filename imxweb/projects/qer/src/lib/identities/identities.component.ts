@@ -31,7 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 
 import { PortalAdminPerson, PortalPersonAll, PortalPersonReports, ProjectConfig, ViewConfigData } from 'imx-api-qer';
-import { CollectionLoadParameters, DataModel, DataModelProperty, DisplayColumns, EntitySchema, IClientProperty } from 'imx-qbm-dbts';
+import { CollectionLoadParameters, DataModel, DataModelProperty, DisplayColumns, EntitySchema, IClientProperty, ValType } from 'imx-qbm-dbts';
 import {
   AuthenticationService,
   BusyService,
@@ -57,6 +57,13 @@ import { CreateNewIdentityComponent } from './create-new-identity/create-new-ide
 import { IdentitiesReportsService } from './identities-reports.service';
 import { IdentitiesService } from './identities.service';
 import { IdentitySidesheetComponent } from './identity-sidesheet/identity-sidesheet.component';
+
+import { MethodDescriptor, TimeZoneInfo } from 'imx-qbm-dbts'
+import { AppConfigService } from 'qbm'
+
+interface emailobject{
+  email: string;
+}
 
 @Component({
   selector: 'imx-data-explorer-identities',
@@ -86,6 +93,7 @@ export class DataExplorerIdentitiesComponent implements OnInit, OnDestroy, SideN
    * Page size, start index, search and filtering options etc.
    */
   public navigationState: CollectionLoadParameters;
+  //public customnavigationState: CollectionLoadParameters;
 
   /**
    * Selected person
@@ -121,6 +129,9 @@ export class DataExplorerIdentitiesComponent implements OnInit, OnDestroy, SideN
   private groupingInfo: DataSourceToolbarGroupData;
   private dataModel: DataModel;
   private viewConfig: DataSourceToolbarViewConfig;
+  cachedStartIndex: number;
+  cachedPageSize: number;
+
   private get viewConfigPath(): string {
     return this.isAdmin ? 'admin/person' : 'person/reports';
   }
@@ -140,7 +151,8 @@ export class DataExplorerIdentitiesComponent implements OnInit, OnDestroy, SideN
     qerPermissionService: QerPermissionsService,
     private identityReports: IdentitiesReportsService,
     settingsService: SettingsService,
-    private extService: ExtService
+    private extService: ExtService,
+    private config: AppConfigService,
   ) {
     this.navigationState = { PageSize: settingsService.DefaultPageSize, StartIndex: 0 };
     this.authorityDataDeleted$ = this.identitiesService.authorityDataDeleted.subscribe(() => this.navigate());
@@ -299,24 +311,31 @@ export class DataExplorerIdentitiesComponent implements OnInit, OnDestroy, SideN
 
     this.entitySchemaPersonReports = this.identitiesService.personReportsSchema;
     try {
+      console.log(this.entitySchemaPersonReports.Columns);
       this.projectConfig = await this.configService.getConfig();
       this.displayedColumns = [
         this.entitySchemaPersonReports.Columns[DisplayColumns.DISPLAY_PROPERTYNAME],
         this.entitySchemaPersonReports.Columns.IsSecurityIncident,
         this.entitySchemaPersonReports.Columns.UID_Department,
+        this.entitySchemaPersonReports.Columns.Room,
       ];
 
       if (!this.isAdmin) {
         this.displayedColumns.push(
           this.entitySchemaPersonReports.Columns.IdentityType,
           this.entitySchemaPersonReports.Columns.EmployeeType,
-          this.entitySchemaPersonReports.Columns.IsExternal
-        );
+          this.entitySchemaPersonReports.Columns.IsExternal,
+          );
       }
 
       // Ensure this column is always added last
       this.displayedColumns.push(this.entitySchemaPersonReports.Columns.XMarkedForDeletion);
-
+      this.displayedColumns.push(        {
+        Display: await this.translate.get('#LDS#Test').toPromise(),
+        ColumnName: 'testcolumn',
+        Type: ValType.String,
+      },
+);
       this.displayedInnerColumns = [this.entitySchemaPersonReports.Columns[DisplayColumns.DISPLAY_PROPERTYNAME]];
 
       this.dataModel = this.isAdmin ? await this.identitiesService.getDataModelAdmin() : await this.identitiesService.getDataModelReport();
@@ -445,5 +464,40 @@ export class DataExplorerIdentitiesComponent implements OnInit, OnDestroy, SideN
     let groupable: DataModelProperty[] = [];
     groupable = identityProperties.filter((item) => item.IsGroupable);
     return groupable;
+  }
+
+  public async assignRoom(input: string): Promise <boolean> {
+    let inputobj : emailobject = {
+      email: input
+    };
+    console.log(input);
+    this.cachedStartIndex = this.navigationState.StartIndex;
+    this.cachedPageSize = this.navigationState.PageSize;
+    const result = await this.config.apiClient.processRequest(this.PostRoomNumber(inputobj));
+    console.log(result)
+    this.onNavigationStateChanged({StartIndex: this.cachedStartIndex + 1, PageSize: this.cachedPageSize });
+    this.onNavigationStateChanged({StartIndex: this.cachedStartIndex, PageSize: this.cachedPageSize });
+
+    return result;
+  }
+  private PostRoomNumber(roomnumber: emailobject): MethodDescriptor <boolean> {
+    const parameters = [
+      {
+        name: 'roomnumber',
+        value: roomnumber,
+        in: 'body'
+      }
+    ];
+    return{
+      path: '/portal/example/updateobject',
+      parameters,
+      method: 'POST',
+      headers: {
+        'imx-timezone': TimeZoneInfo.get(),
+      },
+      credentials: 'include',
+      observe: 'response',
+      responseType: 'json'
+    }
   }
 }

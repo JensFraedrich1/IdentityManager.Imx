@@ -1,5 +1,18 @@
-<h2 class="mat-headline">{{ '#LDS#Welcome' | translate }}</h2>
-
+<div class="row">
+  <div class="col">
+    <div >
+      <h2 class="mat-headline">{{ '#LDS#Welcome' | translate }} {{FirstName}} {{LastName}}</h2>
+    </div>
+  </div>
+  <div class="col">
+    <div class="imx-step-button">
+        <button data-imx-identifier="imx-delegation-step-0-next" mat-stroked-button color="primary" >
+          {{ '#LDS#Next' | translate }}
+        </button>
+    </div>
+    <hr>
+  </div>
+</div>
 <imx-busy-indicator *ngIf="!viewReady"></imx-busy-indicator>
 
 <ng-container>

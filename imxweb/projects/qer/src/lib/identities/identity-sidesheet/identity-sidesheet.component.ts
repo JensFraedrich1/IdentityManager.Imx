@@ -100,7 +100,7 @@ export class IdentitySidesheetComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly systemInfoService: SystemInfoService,
     private readonly translate: TranslateService,
-    private readonly extService: ExtService,    
+    private readonly extService: ExtService,
     private readonly featureConfigService: FeatureConfigService,
     private readonly cdrFactoryService: CdrFactoryService,
     authentication: AuthenticationService,
@@ -318,7 +318,11 @@ export class IdentitySidesheetComponent implements OnInit, OnDestroy {
     this.detailsFormGroup.addControl(this.data.selectedIdentity.IsInActive.Column.ColumnName, this.isActiveFormControl);
 
     const personalColumns = this.data.projectConfig.PersonConfig.VI_Employee_MasterData_Attributes;
-    this.cdrListPersonal = this.cdrFactoryService.buildCdrFromColumnList(this.data.selectedIdentity.GetEntity(), personalColumns, !this.data.canEdit);
+//    this.cdrListPersonal = this.cdrFactoryService.buildCdrFromColumnList(this.data.selectedIdentity.GetEntity(), personalColumns, !this.data.canEdit);
+//    makes this form "readonly", everywhere you find cdr is a read-only query similar to this one
+//    ATTENTION: This makes the whole module read-only, if you want to block only specific fields, you will need to change the buildCdrFromColumnList
+//    to only contain those columns who should be readonly
+    this.cdrListPersonal = this.cdrFactoryService.buildCdrFromColumnList(this.data.selectedIdentity.GetEntity(), personalColumns, true);
 
     const organizationalColumns = this.data.projectConfig.PersonConfig.VI_Employee_MasterData_OrganizationalAttributes;
     this.cdrListOrganizational = this.cdrFactoryService.buildCdrFromColumnList(

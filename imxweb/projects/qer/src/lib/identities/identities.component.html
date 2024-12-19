@@ -43,11 +43,19 @@
       <imx-data-table-column *ngIf="!this.isAdmin" [entityColumn]="entitySchemaPersonReports?.Columns.IdentityType"> </imx-data-table-column>
       <imx-data-table-column *ngIf="!this.isAdmin" [entityColumn]="entitySchemaPersonReports?.Columns.EmployeeType"> </imx-data-table-column>
       <imx-data-table-column *ngIf="!this.isAdmin" [entityColumn]="entitySchemaPersonReports?.Columns.IsExternal"> </imx-data-table-column>
+      <imx-data-table-column [entityColumn]="entitySchemaPersonReports?.Columns.Room"> </imx-data-table-column>
       <imx-data-table-generic-column alignHeader="center" alignContent="center" [columnName]="entitySchemaPersonReports?.Columns.XMarkedForDeletion.ColumnName">
         <ng-template let-item>
           <div *ngIf="item.XMarkedForDeletion.value !== 0">
             <eui-badge color="gray">{{ item.XMarkedForDeletion.Column.GetDisplayValue() }}</eui-badge>
           </div>
+        </ng-template>
+      </imx-data-table-generic-column>
+      <imx-data-table-generic-column alignHeader="center" alignContent="center" [columnName]="'testcolumn'">
+        <ng-template let-item>
+          <button data-imx-identifier="imx-delegation-next" mat-stroked-button color="primary" (click)="assignRoom(item.DefaultEmailAddress.Column.GetDisplayValue())" >
+            {{ '#LDS#Insert' | translate }}
+          </button>
         </ng-template>
       </imx-data-table-generic-column>
     </imx-data-table>
